@@ -12,15 +12,22 @@ import api from "./api/posts";
 import { format } from "date-fns";
 import EditPost from "./EditPost";
 
+import useWindowSize from "./hooks/useWindowSize";
+import useAxiosFetch from "./hooks/useAxiosFetch";
+
 function App() {
   const [posts, setPosts] = useState([]);
-
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [postTitle, setPostTitle] = useState("");
   const [postBody, setPostBody] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
+
+  const { width } = useWindowSize();
+  const { data, isLoading, fetchError } = useAxiosFetch(
+    "http://localhost:3500/posts"
+  );
 
   const handleEdit = async (id) => {
     const updatedPost = {
@@ -41,25 +48,29 @@ function App() {
     }
   };
 
+  // useEffect(() => {
+  //   const fetchPosts = async () => {
+  //     try {
+  //       const response = await api.get("/posts");
+  //       setPosts(response.data);
+  //     } catch (err) {
+  //       if (err.response) {
+  //         console.log("There was an error");
+  //         console.log(err.response.data);
+  //         console.log(err.response.status);
+  //         console.log(err.response.headers);
+  //       } else {
+  //         console.log("There was an error");
+  //         console.log(err.message);
+  //       }
+  //     }
+  //   };
+  //   fetchPosts();
+  // }, []);
+
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await api.get("/posts");
-        setPosts(response.data);
-      } catch (err) {
-        if (err.response) {
-          console.log("There was an error");
-          console.log(err.response.data);
-          console.log(err.response.status);
-          console.log(err.response.headers);
-        } else {
-          console.log("There was an error");
-          console.log(err.message);
-        }
-      }
-    };
-    fetchPosts();
-  }, []);
+    setPosts(data);
+  }, [data]);
 
   useEffect(() => {
     const filteredResults = posts.filter(
@@ -72,12 +83,21 @@ function App() {
 
   return (
     <div className="App">
-      <Header title={"React Js Blog"} />
+      <Header title={"React Js Blog"} width={width} />
 
       <BrowserRouter>
         <Nav search={search} setSearch={setSearch} />
         <Routes>
-          <Route path="/" element={<Home posts={searchResults} />} />
+          <Route
+            path="/"
+            element={
+              <Home
+                posts={searchResults}
+                fetchError={fetchError}
+                isLoading={isLoading}
+              />
+            }
+          />
           <Route
             path="/post"
             element={
